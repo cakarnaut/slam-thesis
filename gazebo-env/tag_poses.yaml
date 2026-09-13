@@ -1,0 +1,78 @@
+# AprilTag world-frame (map-frame) poses for slam_thesis_room.sdf
+# Room shape: regular hexagon, side length / circumradius R = 4.5 m,
+# apothem ~= 3.897 m, wall height 2.5 m, area ~= 52.6 m^2.
+# One tag per wall (6 walls, 6 tags), wall_i connects hexagon vertex
+# i to vertex i+1. 4 central obstacle pillars in a 2x2 grid (see
+# room.sdf, obstacle_0..obstacle_3) at (+-1.2, +-1.2).
+#
+# These are the GROUND-TRUTH poses you placed the tags at in Gazebo.
+# The pose-conversion node (apriltag_ros detection -> map-frame robot
+# pose) needs exactly this table hardcoded (or loaded from this file)
+# to turn a camera-relative tag detection into an absolute map pose.
+#
+# Frame convention: SDF world frame, ENU (x forward/east, y left/north,
+# z up), pose = [x, y, z, roll, pitch, yaw] in metres / radians.
+# roll is -pi/2 for every tag (mounts the board vertically on the
+# wall); yaw matches each wall's tangent angle.
+#
+# tag_size is the PRINTED DATA-REGION size (not the full textured
+# board, which also includes a quiet-zone margin) -- this is the
+# number you must put in apriltag_ros's tag config (tag.yaml), e.g.:
+#   standalone_tags:
+#     - {id: 0, size: 0.16, name: 'tag_0'}
+
+family: tag36h11
+tag_size: 0.16          # metres, data region only
+board_size: 0.24         # metres, full textured board incl. quiet zone
+room_shape: regular_hexagon
+circumradius: 4.5         # metres (= side length for a regular hexagon)
+apothem: 3.897            # metres, centre-to-wall-centreline distance
+
+tags:
+  - id: 0
+    name: tag_0
+    wall: wall_0
+    pose: [3.3274, 1.9211, 1.2, -1.5708, 0.0, 2.0944]
+
+  - id: 1
+    name: tag_1
+    wall: wall_1
+    pose: [0.0, 3.8421, 1.2, -1.5708, 0.0, 3.1416]
+
+  - id: 2
+    name: tag_2
+    wall: wall_2
+    pose: [-3.3274, 1.9211, 1.2, -1.5708, 0.0, -2.0944]
+
+  - id: 3
+    name: tag_3
+    wall: wall_3
+    pose: [-3.3274, -1.9211, 1.2, -1.5708, 0.0, -1.0472]
+
+  - id: 4
+    name: tag_4
+    wall: wall_4
+    pose: [0.0, -3.8421, 1.2, -1.5708, 0.0, 0.0]
+
+  - id: 5
+    name: tag_5
+    wall: wall_5
+    pose: [3.3274, -1.9211, 1.2, -1.5708, 0.0, 1.0472]
+
+obstacles:
+  - name: obstacle_0
+    pose: [-1.2, -1.2, 0.25, 0, 0, 0]
+    radius: 0.15
+    height: 0.5
+  - name: obstacle_1
+    pose: [-1.2, 1.2, 0.25, 0, 0, 0]
+    radius: 0.15
+    height: 0.5
+  - name: obstacle_2
+    pose: [1.2, -1.2, 0.25, 0, 0, 0]
+    radius: 0.15
+    height: 0.5
+  - name: obstacle_3
+    pose: [1.2, 1.2, 0.25, 0, 0, 0]
+    radius: 0.15
+    height: 0.5

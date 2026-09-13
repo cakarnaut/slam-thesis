@@ -1,0 +1,9 @@
+# Dizinler
+scripts/__pycache__/
+
+
+# Dosyalar
+urdf/car.urdf 
+urdf/car_review.org
+report.org
+README.md
