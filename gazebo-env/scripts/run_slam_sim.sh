@@ -163,12 +163,31 @@ APRILTAG_PID=$!
 
 sleep 2
 
-# # --- 8. Hatirlatma + teleop (on planda, interaktif) ---
-# echo ""
-# echo "============================================================"
-# echo "  Gazebo penceresinde Play (>) tusuna basmayi unutma!"
-# echo "  Arac henuz fizik calismadigi icin havada/duraklatilmis durabilir."
-# echo "============================================================"
-# echo ""
-# echo "Teleop baslatiliyor (u/i/o/j/k/l/,/./m ile sur, Ctrl+C ile cik)..."
-# ros2 run teleop_twist_keyboard teleop_twist_keyboard
+# --- 8. On planda bekle ---
+#
+# BU ADIM ZORUNLU. Gazebo, bridge ve apriltag_node'un hepsi arka planda
+# (&) calisiyor; yukarida kurulan "trap cleanup EXIT" ise script BITER
+# BITMEZ hepsini oldurur. Dolayisiyla script'i on planda tutan bir is
+# yoksa, son satira gelir gelmez normal sekilde cikar ve kendi
+# baslattigi her seyi birkac saniye icinde kapatir. Bu adim o yuzden
+# "on planda tutan is" gorevini ustleniyor.
+#
+# Eskiden bu isi teleop yapiyordu ama teleop blogu yoruma alinmisti;
+# "Gazebo kendiliginden kapaniyor" sikayetinin sebebi tam olarak buydu.
+# Teleop'u buraya geri koymak yerine `wait` kullaniyoruz, boylece teleop
+# ayri bir terminalde (scripts/teleop.sh) calistirilabiliyor.
+echo ""
+echo "============================================================"
+echo "  Gazebo penceresinde Play (>) tusuna basmayi unutma!"
+echo "  Arac fizik baslamadan havada/duraklatilmis durabilir."
+echo ""
+echo "  Surmek icin AYRI bir terminalde:  scripts/teleop.sh"
+echo ""
+echo "  Kapatmak icin burada Ctrl+C."
+echo "============================================================"
+echo ""
+
+# wait: arka plandaki sureclerden biri bitene kadar on planda bekle.
+# set -e aktif oldugu icin `|| true` sart -- Ctrl+C sonrasi wait sifirdan
+# farkli doner ve bu, cleanup calismadan cikmaya yol acabilirdi.
+wait || true
