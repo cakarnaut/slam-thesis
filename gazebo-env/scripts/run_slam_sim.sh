@@ -14,8 +14,11 @@
 
 set -e
 
-# --- Ayarlar: yolunu kendi sistemine gore duzelt ---
-WORKSPACE_DIR="/workspace/src/slam_thesis_gazebo"
+# --- Ayarlar ---
+# WORKSPACE_DIR'i script'in KENDI konumundan turetiyoruz; boylece depo
+# nereye klonlanirsa klonlansin elle yol duzeltmeye gerek kalmiyor.
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+WORKSPACE_DIR="$(dirname "${SCRIPT_DIR}")"
 WORLD_FILE="${WORKSPACE_DIR}/worlds/room.sdf"
 XACRO_FILE="${WORKSPACE_DIR}/urdf/car.urdf.xacro"
 CAR_URDF="${WORKSPACE_DIR}/urdf/car.urdf"
@@ -114,16 +117,31 @@ ros2 run "${SPAWN_PKG}" create -file "${CAR_URDF}" -name "${CAR_NAME}" -x 0 -y 0
 
 sleep 2
 
-# --- 6. ROS2 bridge'i arka planda baslat (camera_info dahil) ---
+# --- 6. ROS2 bridge'i arka planda baslat ---
+#
+# Yon isaretleri (ros_gz_bridge sozdizimi):
+#   @ = cift yonlu, [ = SADECE gz -> ROS, ] = SADECE ROS -> gz
+# Her topic'e gercekten ihtiyac duyulan tek yon veriliyor; eskiden hepsi
+# cift yonluydu, bu gereksiz publisher/abonelik uretiyordu ve ozellikle
+# /tf'te geri-besleme riski tasiyordu.
+#
+# /clock KRITIK: Gazebo mesajlari sim-time damgali (0'dan baslar), ROS
+# node'lari varsayilan olarak wall-clock kullanir. /clock koprulenmeden
+# ve node'lara use_sim_time:=true verilmeden TF lookup'lari (ve ileride
+# EKF) zaman uyusmazligindan patlar.
 echo "ROS2 bridge baslatiliyor..."
 ros2 run "${BRIDGE_PKG}" parameter_bridge \
-  /cmd_vel@geometry_msgs/msg/Twist@ignition.msgs.Twist \
-  /odom@nav_msgs/msg/Odometry@ignition.msgs.Odometry \
-  /tf@tf2_msgs/msg/TFMessage@ignition.msgs.Pose_V \
-  /scan@sensor_msgs/msg/LaserScan@ignition.msgs.LaserScan \
-  /imu@sensor_msgs/msg/Imu@ignition.msgs.IMU \
-  /camera/image@sensor_msgs/msg/Image@ignition.msgs.Image \
-  /camera/camera_info@sensor_msgs/msg/CameraInfo@ignition.msgs.CameraInfo &
+  "/clock@rosgraph_msgs/msg/Clock[ignition.msgs.Clock" \
+  "/cmd_vel@geometry_msgs/msg/Twist]ignition.msgs.Twist" \
+  "/odom@nav_msgs/msg/Odometry[ignition.msgs.Odometry" \
+  "/tf@tf2_msgs/msg/TFMessage[ignition.msgs.Pose_V" \
+  "/scan@sensor_msgs/msg/LaserScan[ignition.msgs.LaserScan" \
+  "/imu@sensor_msgs/msg/Imu[ignition.msgs.IMU" \
+  "/camera/image@sensor_msgs/msg/Image[ignition.msgs.Image" \
+  "/camera/camera_info@sensor_msgs/msg/CameraInfo[ignition.msgs.CameraInfo" \
+  "/world/${WORLD_NAME}/model/${CAR_NAME}/joint_state@sensor_msgs/msg/JointState[ignition.msgs.Model" \
+  --ros-args \
+  -r "/world/${WORLD_NAME}/model/${CAR_NAME}/joint_state:=/joint_states" &
 BRIDGE_PID=$!
 
 sleep 2
@@ -131,10 +149,15 @@ sleep 2
 # --- 7. apriltag_node'u ARKA PLANDA baslat (bu bir servis/node, bitmez --
 #     & olmadan script burada sonsuza kadar takili kalirdi ve teleop hic
 #     acilmazdi) ---
+# use_sim_time: apriltag_node'un yayinladigi detection/TF damgalari
+# Gazebo'nun sim saatiyle ayni eksende olmali. parameter_bridge'e bu
+# parametre BILEREK verilmiyor -- /clock'u bizzat o yayinliyor, kendi
+# yayinladigi saati beklemesi baslangicta kilitlenmeye yol acar.
 echo "apriltag_node baslatiliyor..."
 ros2 run apriltag_ros apriltag_node --ros-args \
   -r image_rect:=/camera/image \
   -r camera_info:=/camera/camera_info \
+  -p use_sim_time:=true \
   --params-file "${TAGS_CONFIG}" &
 APRILTAG_PID=$!
 

@@ -146,6 +146,21 @@
   <xacro:property name="camera_origin_x"  value="${chassis_length/2}"/>
   <xacro:property name="camera_origin_z"  value="${wheel_radius + chassis_height*0.7}"/>
 
+  <!-- camera_pitch: kamerayi YUKARI egen aci (radyan). Tag'ler duvarda
+       z=1.2 m'de, kamera ise z=0.12 m'de; aradaki 1.08 m'lik fark
+       yuzunden duz bakan bir kamera tag'i ancak 2.39 m'den UZAKTAN
+       kadraja sigdirabiliyordu (daha yakinda tag kadrajin ustunden
+       tasiyordu). 15 derece yukari pitch ile bu sinir 1.34 m'ye
+       iniyor; ayrica oda merkezinden duvara olan 3.84 m'lik tipik
+       calisma mesafesinde tag neredeyse tam optik eksene oturuyor
+       (+0.7 derece), bu da PnP pose kestiriminde lens kenarindaki
+       bozulmadan kacinmayi sagliyor.
+       DIKKAT: ROS/REP-103 konvansiyonunda pitch +y ekseni etrafinda
+       doner ve POZITIF pitch burnu ASAGI eger. Bu yuzden asagidaki
+       camera_joint'te isaret NEGATIF kullaniliyor. -->
+  <xacro:property name="camera_pitch"     value="0.2618"/> <!-- 15 derece -->
+  <xacro:property name="camera_joint_pitch" value="${-camera_pitch}"/>
+
   <!-- OPERASYONEL:
        - camera_horizontal_fov: yatay gorus acisi (radyan). Genis FOV
          AprilTag'leri daha erken/genis acidan yakalar ama goruntude
@@ -463,7 +478,7 @@
   <joint name="camera_joint" type="fixed">
     <parent link="base_link"/>
     <child link="camera_link"/>
-    <origin xyz="${camera_origin_x} 0 ${camera_origin_z}" rpy="0 0 0"/>
+    <origin xyz="${camera_origin_x} 0 ${camera_origin_z}" rpy="0 ${camera_joint_pitch} 0"/>
   </joint>
 
   <link name="camera_link_optical"/>
