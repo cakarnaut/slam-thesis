@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <!-- DIKKAT: ROS 2 paket ismi tire iceremez (kural: ^[a-z][a-z0-9_]*$).
+       Dizin adi 'pose-from-apriltag' olarak kaldi cunku colcon paketi
+       package.xml'deki <name> ile tanir, dizin adiyla degil. Kodda,
+       launch dosyalarinda ve 'ros2 run' cagrilarinda ALT CIZGILI hali
+       kullanilacak: pose_from_apriltag -->
+  <name>pose_from_apriltag</name>
+  <version>0.0.1</version>
+  <description>
+    AprilTag tespitlerinden mutlak (map cercevesinde) arac pose'u ureten
+    node. /detections mesajindaki en yuksek decision_margin'li tag secilir,
+    bilinen tag pose'u ile TF zinciri birlestirilerek map -> base_link
+    donusumu hesaplanir ve TF olarak yayinlanir.
+  </description>
+  <maintainer email="mstf.ckr8198@gmail.com">cakarnaut</maintainer>
+  <license>MIT</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <depend>rclcpp</depend>
+  <depend>apriltag_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <depend>tf2</depend>
+  <depend>tf2_ros</depend>
+  <depend>tf2_geometry_msgs</depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>
