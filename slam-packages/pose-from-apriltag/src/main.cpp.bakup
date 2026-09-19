@@ -1,0 +1,124 @@
+#include <rclcpp/rclcpp.hpp>
+#include <apriltag_msgs/msg/april_tag_detection_array.hpp>
+#include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
+#include <tf2_ros/buffer.h>
+#include <tf2_ros/transform_listener.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+#include <tf2/LinearMath/Transform.h>
+#include <yaml-cpp/yaml.h>
+#include <unordered_map>
+#include <string>
+
+
+class AprilTagLookupNode : public rclcpp::Node
+{
+public:
+  AprilTagLookupNode() : Node("apriltag_lookup_node")
+  {
+    this->declare_parameter<std::string>("tag_poses_file", "");
+    std::string path = this->get_parameter("tag_poses_file").as_string();
+    if (path.empty()) {
+      throw std::runtime_error("tag_poses_file parametresi verilmedi");
+    }
+    load_tag_poses(path);
+
+    tf_buffer_ = std::make_unique<tf2_ros::Buffer>(this->get_clock());
+    tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
+
+    pose_pub_ = this->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>(
+      "apriltag/pose", 10);
+
+    detections_sub_ = this->create_subscription<apriltag_msgs::msg::AprilTagDetectionArray>(
+      "/detections", 10,
+      std::bind(&AprilTagLookupNode::detections_callback, this, std::placeholders::_1));
+
+    RCLCPP_INFO(get_logger(), "%zu tag world pose yuklendi.", tag_world_poses_.size());
+  }
+
+private:
+  struct TagPose { double x, y, z, roll, pitch, yaw; };
+
+  void load_tag_poses(const std::string & path)
+  {
+    YAML::Node root = YAML::LoadFile(path);
+    for (const auto & t : root["tags"]) {
+      int id = t["id"].as<int>();
+      auto v = t["pose"].as<std::vector<double>>();
+      tag_world_poses_[id] = TagPose{v[0], v[1], v[2], v[3], v[4], v[5]};
+      tag_frame_names_[id] = t["name"].as<std::string>();
+    }
+  }
+
+  static tf2::Transform to_transform(const TagPose & tp)
+  {
+    tf2::Quaternion q;
+    q.setRPY(tp.roll, tp.pitch, tp.yaw);
+    return tf2::Transform(q, tf2::Vector3(tp.x, tp.y, tp.z));
+  }
+
+  void detections_callback(const apriltag_msgs::msg::AprilTagDetectionArray::SharedPtr msg)
+  {
+    if (msg->detections.empty()) return;  // hicbir tag yok, EKF dead-reckoning'e devam etsin
+
+    // En yuksek decision_margin'li tespiti sec -- id'ye gore DALLANMAYAN genel max-arama
+    const auto * best = &msg->detections[0];
+    for (const auto & d : msg->detections) {
+      if (d.decision_margin > best->decision_margin) best = &d;
+    }
+
+    auto it = tag_world_poses_.find(best->id);
+    if (it == tag_world_poses_.end()) {
+      RCLCPP_WARN(get_logger(), "id=%d lookup table'da yok", best->id);
+      return;
+    }
+    const std::string & tag_frame = tag_frame_names_[best->id];
+
+    geometry_msgs::msg::TransformStamped cam_to_tag, cam_to_base;
+    try {
+      cam_to_tag  = tf_buffer_->lookupTransform("camera_link_optical", tag_frame, tf2::TimePointZero);
+      cam_to_base = tf_buffer_->lookupTransform("camera_link_optical", "base_footprint", tf2::TimePointZero);
+    } catch (const tf2::TransformException & ex) {
+      RCLCPP_WARN(get_logger(), "TF bulunamadi: %s", ex.what());
+      return;
+    }
+
+    tf2::Transform T_camera_tag, T_camera_base;
+    tf2::fromMsg(cam_to_tag.transform, T_camera_tag);
+    tf2::fromMsg(cam_to_base.transform, T_camera_base);
+
+    // map->base_footprint = map->tag * tag->camera * camera->base_footprint
+    tf2::Transform T_map_tag  = to_transform(it->second);
+    tf2::Transform T_map_base = T_map_tag * T_camera_tag.inverse() * T_camera_base;
+
+    geometry_msgs::msg::PoseWithCovarianceStamped out;
+    out.header.stamp = msg->header.stamp;
+    out.header.frame_id = "map";
+    out.pose.pose.position.x = T_map_base.getOrigin().x();
+    out.pose.pose.position.y = T_map_base.getOrigin().y();
+    out.pose.pose.position.z = T_map_base.getOrigin().z();
+    out.pose.pose.orientation = tf2::toMsg(T_map_base.getRotation());
+    for (auto & c : out.pose.covariance) c = 0.0;
+    out.pose.covariance[0] = out.pose.covariance[7] = out.pose.covariance[14] =
+      out.pose.covariance[21] = out.pose.covariance[28] = out.pose.covariance[35] = 0.05;
+
+    pose_pub_->publish(out);
+  }
+
+  std::unordered_map<int, TagPose> tag_world_poses_;
+  std::unordered_map<int, std::string> ptag_frame_names_;
+  std::unique_ptr<tf2_ros::Buffer> tf_buffer_;
+  std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
+  rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr pose_pub_;
+  rclcpp::Subscription<apriltag_msgs::msg::AprilTagDetectionArray>::SharedPtr detections_sub_;
+};
+
+int main(int argc, char ** argv)
+{
+  rclcpp::init(argc, argv);
+  rclcpp::spin(std::make_shared<AprilTagLookupNode>());
+  rclcpp::shutdown();
+  return 0;
+
+
+
+}

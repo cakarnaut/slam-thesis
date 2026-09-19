@@ -1,6 +1,6 @@
 # Dizinler
 scripts/__pycache__/
-
+.crush/
 
 # Dosyalar
 urdf/car.urdf 

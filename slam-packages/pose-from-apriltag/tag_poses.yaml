@@ -1,0 +1,36 @@
+family: tag36h11
+tag_size: 0.16          
+room_shape: regular_hexagon
+circumradius: 4.5
+apothem: 3.897
+
+tags:
+  - id: 0
+    name: tag_0
+    wall: wall_0
+    pose: [3.3274, 1.9211, 1.2, -1.5708, 0.0, 2.0944]
+
+  - id: 1
+    name: tag_1
+    wall: wall_1
+    pose: [0.0, 3.8421, 1.2, -1.5708, 0.0, 3.1416]
+
+  - id: 2
+    name: tag_2
+    wall: wall_2
+    pose: [-3.3274, 1.9211, 1.2, -1.5708, 0.0, -2.0944]
+
+  - id: 3
+    name: tag_3
+    wall: wall_3
+    pose: [-3.3274, -1.9211, 1.2, -1.5708, 0.0, -1.0472]
+
+  - id: 4
+    name: tag_4
+    wall: wall_4
+    pose: [0.0, -3.8421, 1.2, -1.5708, 0.0, 0.0]
+
+  - id: 5
+    name: tag_5
+    wall: wall_5
+    pose: [3.3274, -1.9211, 1.2, -1.5708, 0.0, 1.0472]
