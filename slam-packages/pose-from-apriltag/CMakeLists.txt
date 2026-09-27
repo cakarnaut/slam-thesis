@@ -12,10 +12,6 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 
-# apriltag_msgs: /detections topic'inin tipi (AprilTagDetectionArray).
-# NOT: Bu mesajin icinde POSE YOK -- sadece id, family, hamming,
-# decision_margin, centre ve corners var. Tag'in pose'u apriltag_node
-# tarafindan yalnizca TF olarak yayinlanir, o yuzden tf2_ros da gerekli.
 find_package(apriltag_msgs REQUIRED)
 
 find_package(geometry_msgs REQUIRED)
@@ -25,7 +21,13 @@ find_package(tf2_geometry_msgs REQUIRED)
 find_package(yaml-cpp REQUIRED)
 
 
-add_executable(pose_from_apriltag_node src/main.cpp)
+add_executable(pose_from_apriltag_node 
+src/main.cpp
+src/methods/call_back.cpp
+src/methods/constructor.cpp
+src/methods/init.cpp
+src/methods/load_tag_poses.cpp
+)
 
 target_compile_features(pose_from_apriltag_node PUBLIC cxx_std_17)
 
@@ -40,6 +42,8 @@ ament_target_dependencies(pose_from_apriltag_node
 
 
 target_link_libraries(pose_from_apriltag_node ${YAML_CPP_LIBRARIES})
+
+include_directories(include)
 
 install(TARGETS pose_from_apriltag_node
   DESTINATION lib/${PROJECT_NAME}

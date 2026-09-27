@@ -1,0 +1,10 @@
+#include "../../include/Pose-From-Apriltag/base.hpp"
+
+PoseFromApriltag::GlobalPose::GlobalPose() :rclcpp::Node("pose_global_node")
+{
+
+// Tag dosyasını oku
+load_tag_poses();
+
+
+}
