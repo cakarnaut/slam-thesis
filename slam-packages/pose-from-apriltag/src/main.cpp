@@ -6,7 +6,17 @@ int main(int argc, char **argv) {
 
   auto node = std::make_shared<PoseFromApriltag::GlobalPose>();
 
-  node->init();
+  try {
+
+    node->init();
+
+  } catch (const std::exception &e) {
+    std::cout << "sonlandırıyoruz" << std::endl;
+
+    rclcpp::shutdown();
+
+    return 1;
+  }
 
   rclcpp::spin(node);
 

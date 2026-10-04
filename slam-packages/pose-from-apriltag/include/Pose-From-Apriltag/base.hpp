@@ -5,6 +5,10 @@
 #include <rclcpp/rclcpp.hpp>
 #include <std_msgs/msg/string.hpp>
 #include <string.h>
+#include <tf2/LinearMath/Transform.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <tf2_ros/buffer.h>
+#include <tf2_ros/transform_listener.h>
 #include <unordered_map>
 #include <yaml-cpp/yaml.h>
 
@@ -20,7 +24,6 @@ struct Pose {
 
 public:
   Pose(const std::vector<double> &vec) {
-
     if (vec.size() >= 6) {
       x = vec[0];
       y = vec[1];
@@ -42,16 +45,35 @@ private:
   std::unordered_map<int, std::string> m_names_frame;
   rclcpp::Subscription<apriltag_msgs::msg::AprilTagDetectionArray>::SharedPtr
       m_sub_detection;
+  rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr
+      m_pub_pose;
+
+  // tf spesific
+  std::unique_ptr<tf2_ros::Buffer> m_buff_tf;
+  std::shared_ptr<tf2_ros::TransformListener> m_listener_tf;
 
   // private methods
   void pose_call_back(const apriltag_msgs::msg::AprilTagDetectionArray &msg);
   void load_tag_poses();
 
 public:
-  // public methdos
-  GlobalPose();
+  // public methods
+  GlobalPose() : rclcpp::Node("pose_global_node") {}
   void init();
 };
+
+tf2::Transform transform_to(const PoseFromApriltag::Pose &pose);
+
+
+class SpesificErrors : public std::runtime_error {
+public:
+  using std::runtime_error::runtime_error;
+};
+
+
+
+
+
 
 } // namespace PoseFromApriltag
 

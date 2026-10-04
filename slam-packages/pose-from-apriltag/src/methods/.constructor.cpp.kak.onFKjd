@@ -4,7 +4,5 @@ PoseFromApriltag::GlobalPose::GlobalPose() :rclcpp::Node("pose_global_node")
 {
 
 // Tag dosyasını oku
-load_tag_poses();
-
 
 }
