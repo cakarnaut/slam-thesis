@@ -12,8 +12,12 @@
 #
 # Frame convention: SDF world frame, ENU (x forward/east, y left/north,
 # z up), pose = [x, y, z, roll, pitch, yaw] in metres / radians.
-# roll is -pi/2 for every tag (mounts the board vertically on the
-# wall); yaw matches each wall's tangent angle.
+# Every tag uses roll=0, pitch=-pi/2, yaw=atan2(y, x). pitch=-pi/2 stands
+# the board up with its texture face (+z) pointing along -x and the
+# texture's "up" along +z; yaw then turns that face toward the room
+# centre. The earlier roll=-pi/2 / yaw=wall-tangent form rendered every
+# tag rotated 90 degrees counter-clockwise (verified with the AprilTag
+# detector on headless Gazebo renders).
 #
 # tag_size is the PRINTED DATA-REGION size (not the full textured
 # board, which also includes a quiet-zone margin) -- this is the
@@ -32,32 +36,32 @@ tags:
   - id: 0
     name: tag_0
     wall: wall_0
-    pose: [3.3274, 1.9211, 1.2, -1.5708, 0.0, 2.0944]
+    pose: [3.3274, 1.9211, 1.2, 0.0, -1.5708, 0.5236]
 
   - id: 1
     name: tag_1
     wall: wall_1
-    pose: [0.0, 3.8421, 1.2, -1.5708, 0.0, 3.1416]
+    pose: [0.0, 3.8421, 1.2, 0.0, -1.5708, 1.5708]
 
   - id: 2
     name: tag_2
     wall: wall_2
-    pose: [-3.3274, 1.9211, 1.2, -1.5708, 0.0, -2.0944]
+    pose: [-3.3274, 1.9211, 1.2, 0.0, -1.5708, 2.6180]
 
   - id: 3
     name: tag_3
     wall: wall_3
-    pose: [-3.3274, -1.9211, 1.2, -1.5708, 0.0, -1.0472]
+    pose: [-3.3274, -1.9211, 1.2, 0.0, -1.5708, -2.6180]
 
   - id: 4
     name: tag_4
     wall: wall_4
-    pose: [0.0, -3.8421, 1.2, -1.5708, 0.0, 0.0]
+    pose: [0.0, -3.8421, 1.2, 0.0, -1.5708, -1.5708]
 
   - id: 5
     name: tag_5
     wall: wall_5
-    pose: [3.3274, -1.9211, 1.2, -1.5708, 0.0, 1.0472]
+    pose: [3.3274, -1.9211, 1.2, 0.0, -1.5708, -0.5236]
 
 obstacles:
   - name: obstacle_0
